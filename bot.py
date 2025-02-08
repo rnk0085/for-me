@@ -36,13 +36,17 @@ async def on_message(message):
     if client.user.mentioned_in(message):
         user_message = message.content.replace(f'<@!{client.user.id}>', '').strip()
 
+        # キャラのプロンプトを読み込む
+        with open('mbti-prompt/entp-kosho.txt', 'r', encoding='utf-8') as file:
+            mbti_prompt = file.read()
+
         if user_message:
             # OpenAIにメッセージを送信して返答を取得
             # ref: https://platform.openai.com/docs/guides/text%EF%BC%8Dgeneration
             completion = openAiClient.chat.completions.create(
                 model="gpt-4o-mini",
                 messages=[
-                    {"role": "developer", "content": "You are a helpful assistant."},
+                    {"role": "developer", "content": mbti_prompt},
                     {
                         "role": "user",
                         "content": user_message,
