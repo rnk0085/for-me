@@ -14,7 +14,7 @@ openAiClient = OpenAI(api_key=OPENAI_API_KEY)
 class BotManager:
     def __init__(self, bot: Bot):
         self.bot = bot
-        self.token = os.getenv(f'DISCORD_{bot.mebti_type}_TOKEN')
+        self.token = os.getenv(f'DISCORD_{bot.mbti_type}_TOKEN')
 
         # Intentsを設定
         intents = discord.Intents.default()
