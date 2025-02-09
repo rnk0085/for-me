@@ -17,5 +17,9 @@ allBots = [
     Bot(
         mbti_type="INFJ",
         mbti_file_name="infj-tohru",
-    )
+    ),
+    Bot(
+        mbti_type="ENFP",
+        mbti_file_name="enfp-haru",
+    ),
 ]
