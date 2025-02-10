@@ -1,5 +1,6 @@
 import os
 import discord
+import random
 from dotenv import load_dotenv
 from openai import OpenAI
 from bot import Bot
@@ -39,10 +40,6 @@ class BotManager:
             if message.author == self.client.user:
                 return
             
-            
-            # ランダムに付けるかを決める
-
-
             # リアクション用の処理を走らせる（すでにリアクションが決定していたらスキップ）
             # メッセージに対して適切なリアクションを返す
             print(f"message.content = {message.content}")
@@ -58,7 +55,9 @@ class BotManager:
                 # リアクションを付ける
                 for reaction in reactions:
                     try:
-                        await message.add_reaction(reaction)
+                        # 50%でリアクションを付ける
+                        if random.random() <= 0.5:
+                            await message.add_reaction(reaction)
                     except Exception as e:
                         print(e)
             
