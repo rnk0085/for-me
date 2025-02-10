@@ -20,6 +20,8 @@ class BotManager:
         # Intentsを設定
         intents = discord.Intents.default()
         intents.messages = True  # メッセージの監視を許可
+        # ref: https://discordpy.readthedocs.io/ja/latest/api.html#discord.Message.content
+        intents.message_content = True
 
         # Discordクライアントの作成（intentsを指定）
         self.client = discord.Client(intents=intents)
@@ -36,24 +38,17 @@ class BotManager:
             # 自分のBotのメッセージには反応しない
             if message.author == self.client.user:
                 return
-        
-
-            # メンションされた場合に反応
-            if self.client.user.mentioned_in(message):
-                user_message = message.content.replace(f'<@!{self.client.user.id}>', '').strip()
-
-                # キャラのプロンプトを読み込む
-                with open(f'mbti-prompt/{self.bot.mbti_file_name}.txt', 'r', encoding='utf-8') as file:
-                    mbti_prompt = file.read()
-                
-                
-                # ランダムに付けるかを決める
+            
+            
+            # ランダムに付けるかを決める
 
 
-                # リアクション用の処理を走らせる（すでにリアクションが決定していたらスキップ）
-                # メッセージに対して適切なリアクションを返す
+            # リアクション用の処理を走らせる（すでにリアクションが決定していたらスキップ）
+            # メッセージに対して適切なリアクションを返す
+            print(f"message.content = {message.content}")
+            if message.content.strip():
                 print("self.reactions.fetchReaction start")
-                await self.reactions.fetchReaction(message_id=message.id, message_content=user_message)
+                await self.reactions.fetchReaction(message_id=message.id, message_content=message.content)
                 print("self.reactions.fetchReaction finished")
                 reactions = self.reactions.getReactions(message.id)
                 print(f"reactions = {reactions}")
@@ -62,8 +57,19 @@ class BotManager:
 
                 # リアクションを付ける
                 for reaction in reactions:
-                    await message.add_reaction(reaction)
+                    try:
+                        await message.add_reaction(reaction)
+                    except Exception as e:
+                        print(e)
+            
 
+            # メンションされた場合に反応
+            if self.client.user.mentioned_in(message):
+                user_message = message.content.replace(f'<@!{self.client.user.id}>', '').strip()
+
+                # キャラのプロンプトを読み込む
+                with open(f'prompt/mbti/{self.bot.mbti_file_name}.txt', 'r', encoding='utf-8') as file:
+                    mbti_prompt = file.read()
 
                 if user_message:
                     # OpenAIにメッセージを送信して返答を取得

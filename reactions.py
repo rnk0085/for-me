@@ -10,6 +10,24 @@ load_dotenv()
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 openAiClient = OpenAI(api_key=OPENAI_API_KEY)
 
+# ジャンルと対応する絵文字のマッピング
+reaction_genre_map = {
+    "良い": "👍",
+    "面白い": "😂",
+    "悲しい": "😢",
+    "怒り": "😡",
+    "愛": "❤️",
+    "驚き": "😲",
+    "感謝": "🙏",
+    "モチベーション": "💪",
+    "お祝い": "🎊",
+    "眠い": "💤",
+    "仕事": "💼",
+    "旅行": "✈️",
+    "運動": "🏋️",
+    "勉強": "📚",
+}
+
 class Reactions:
     def __init__(self):
         self.message_reactions = {}
@@ -29,8 +47,13 @@ class Reactions:
             print("OpenAIでリアクションを決める処理")
             self.fetching_message_ids.append(message_id)
 
+            with open(f'prompt/reaction.txt', 'r', encoding='utf-8') as file:
+                reaction_prompt = file.read()
+                print(f"reaction_prompt = {reaction_prompt}")
+
             # OpenAI 使う
-            prompt=f"Analyze the sentiment and content of this message: '{message_content}' and suggest an emoji reaction."
+            prompt = f"「{message_content} 」{reaction_prompt}" 
+            print(f"prompt = {prompt}")
             response = openAiClient.chat.completions.create(
                 model="gpt-4o-mini",
                 messages=[
@@ -43,23 +66,19 @@ class Reactions:
             )
             
             # OpenAIからのレスポンス
-            sentiment_analysis = response.choices[0].message.content
-            print(f"Sentiment analysis result: {sentiment_analysis}")
+            genre_response = response.choices[0].message.content
+            print(f"genre_response: {genre_response}")
 
             recommend_reactions = []
             
             # OpenAIの返答を基にリアクションを選定
             try:
-                if "happy" in sentiment_analysis or "good" in sentiment_analysis:
-                    recommend_reactions.append("👍")  # ポジティブなメッセージに反応
-                elif "funny" in sentiment_analysis or "laugh" in sentiment_analysis:
-                    recommend_reactions.append("😂")  # 面白いメッセージに反応
-                elif "sad" in sentiment_analysis or "bad" in sentiment_analysis:
-                    recommend_reactions.append("👋")  # 悲しいメッセージに反応
-                elif "angry" in sentiment_analysis:
-                    recommend_reactions.append("👋")  # 怒っているメッセージに反応
-                else:
-                    recommend_reactions.append("👋")  # その他のメッセージにはお祝いのリアクションを追加
+                recommend_reactions.append("👀")
+
+                # 定義されたジャンルに当てはまれば、絵文字を追加する
+                for genre in reaction_genre_map:
+                    if genre in genre_response:
+                        recommend_reactions.append(reaction_genre_map[genre])
             except Exception as e:
                 print(e)
             
