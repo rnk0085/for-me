@@ -2,7 +2,7 @@ import re
 import random
 from bot import Bot
 from reaction_handler import ReactionHandler
-from config import get_discord_token, REACTION_RATE
+from config import get_discord_token, get_channel_id, REACTION_RATE, AUTO_REPLY_RATE
 from openai_client import OpenAIClient
 from role_mention_checker import check_role_mention
 from discord_client_setup import setup_discord_client
@@ -27,7 +27,8 @@ class BotManager:
             if message.author == self.client.user:
                 return
             
-            await self.handle_reactions(message)
+            # await self.handle_reactions(message)
+            await self.handle_auto_response(message)
             await self.handle_mentions(message)
             
     
@@ -44,6 +45,57 @@ class BotManager:
                         await message.add_reaction(reaction)
                     except Exception as e:
                         print(f"Error = {e}: リアクションが送れませんでした")
+
+    async def handle_auto_response(self, message):
+        """メンションが無い場合に自動で返信する"""
+        # 自動返信対象かどうかをチェックする
+        # 自動返信対象＝フリートーク、FB、ほめる
+        channel_id = message.channel.id
+        free_talk_channel_id = get_channel_id("FREE_TALK")
+        fb_channel_id = get_channel_id("FB")
+        praise_channel_id = get_channel_id("PRAISE")
+
+        is_free_talk = str(channel_id) == free_talk_channel_id
+        is_fb = str(channel_id) == fb_channel_id
+        is_praise = str(channel_id) == praise_channel_id
+
+        print(f"is_free_talk = {is_free_talk}")
+        print(f"is_fb = {is_fb}")
+        print(f"is_praise = {is_praise}")
+
+        if not is_free_talk and not is_fb and not is_praise:
+            print("「フリートーク、FB、ほめる」以外は自動返信をしない")
+            return
+
+        # Botかどうかをチェックする。フリートーク以外はBot同士で会話をしない。
+        if message.author.bot and is_fb:
+            print("Botに対してFBはしない")
+            return
+
+        if message.author.bot and is_praise:
+            print("Botに対して褒めない")
+            return
+
+        # 低確率で返信する
+        if random.random() > AUTO_REPLY_RATE:
+            return
+        
+        pre_prompt = ""
+        if is_free_talk:
+            pre_prompt = "あなたが興味関心のある話題をテーマに雑談してください。"
+        if is_fb:
+            pre_prompt = "フィードバックをしてください。また、"
+        if is_praise:
+            pre_prompt = "全力で褒めてください。また、"
+
+        mbti_prompt = get_prompt(f'prompt/mbti/{self.bot.mbti_file_name}.txt')
+
+        response = self.openai_client.get_response(
+            prompt = pre_prompt + mbti_prompt,
+            user_message = message.content,
+        )
+
+        await message.channel.send(response)
 
     async def handle_mentions(self, message):
         """メンションがあった場合にキャラが返信をする"""
