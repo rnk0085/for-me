@@ -9,3 +9,6 @@ OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 
 def get_discord_token(mbti_type):
     return os.getenv(f'DISCORD_{mbti_type}_TOKEN')
+
+# リアクションを付ける割合
+REACTION_RATE = 0.5  # 50%

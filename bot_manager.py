@@ -3,7 +3,7 @@ import discord
 import random
 from bot import Bot
 from reactions import Reactions
-from config import get_discord_token
+from config import get_discord_token, REACTION_RATE
 from openai_client import OpenAIClient
 
 class BotManager:
@@ -34,26 +34,18 @@ class BotManager:
             if message.author == self.client.user:
                 return
             
-            # リアクション用の処理を走らせる（すでにリアクションが決定していたらスキップ）
             # メッセージに対して適切なリアクションを返す
-            print(f"message.content = {message.content}")
             if message.content.strip():
-                print("self.reactions.fetchReaction start")
                 await self.reactions.fetchReaction(message_id=message.id, message_content=message.content)
-                print("self.reactions.fetchReaction finished")
                 reactions = self.reactions.getReactions(message.id)
-                print(f"reactions = {reactions}")
-                print("self.reactions.getReactions finished")
-
 
                 # リアクションを付ける
                 for reaction in reactions:
-                    try:
-                        # 50%でリアクションを付ける
-                        if random.random() <= 0.5:
+                    if random.random() <= REACTION_RATE:
+                        try:
                             await message.add_reaction(reaction)
-                    except Exception as e:
-                        print(e)
+                        except Exception as e:
+                            print(f"Error = {e}: リアクションが送れませんでした")
             
             # ロールメンションの対応
             roles = message.role_mentions
