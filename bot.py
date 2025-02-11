@@ -5,7 +5,7 @@ class Bot:
     mbti_type: str # token で使用
     mbti_file_name: str # プロンプトの取得で使用
 
-allBots = [
+all_bots = [
     Bot(
         mbti_type="ENTP",
         mbti_file_name="entp-kosho",

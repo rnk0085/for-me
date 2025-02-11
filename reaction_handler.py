@@ -1,14 +1,6 @@
-import os
 import asyncio
-from dotenv import load_dotenv
-from openai import OpenAI
-
-# .envファイルから環境変数を読み込む
-load_dotenv()
-
-# OpenAIのAPIキーを環境変数から取得
-OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
-openAiClient = OpenAI(api_key=OPENAI_API_KEY)
+from openai_client import OpenAIClient
+from prompt_loader import get_prompt
 
 # ジャンルと対応する絵文字のマッピング
 reaction_genre_map = {
@@ -28,12 +20,14 @@ reaction_genre_map = {
     "勉強": "📚",
 }
 
-class Reactions:
+class ReactionHandler:
     def __init__(self):
         self.message_reactions = {}
         self.fetching_message_ids = []
+        self.openai_client = OpenAIClient()
     
     async def fetchReaction(self, message_id, message_content):
+        """OpenAIを活用してリアクションを取得する"""
         print("fetchReaction start")
 
         # 他のが呼び出していないか。同じIDで呼び出していれば、待って欲しい。
@@ -47,26 +41,12 @@ class Reactions:
             print("OpenAIでリアクションを決める処理")
             self.fetching_message_ids.append(message_id)
 
-            with open(f'prompt/reaction.txt', 'r', encoding='utf-8') as file:
-                reaction_prompt = file.read()
-                print(f"reaction_prompt = {reaction_prompt}")
+            prompt = f"「{message_content} 」{get_prompt(file_path = 'prompt/reaction.txt')}" 
 
-            # OpenAI 使う
-            prompt = f"「{message_content} 」{reaction_prompt}" 
-            print(f"prompt = {prompt}")
-            response = openAiClient.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=[
-                    {"role": "developer", "content": prompt},
-                    {
-                        "role": "user",
-                        "content": message_content,
-                    }
-                ]
+            genre_response = self.openai_client.get_response(
+                prompt = prompt,
+                user_message = message_content,
             )
-            
-            # OpenAIからのレスポンス
-            genre_response = response.choices[0].message.content
             print(f"genre_response: {genre_response}")
 
             recommend_reactions = []

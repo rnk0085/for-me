@@ -1,33 +1,19 @@
-import os
 import re
-import discord
 import random
-from dotenv import load_dotenv
-from openai import OpenAI
 from bot import Bot
-from reactions import Reactions
-
-# .envファイルから環境変数を読み込む
-load_dotenv()
-
-# OpenAIのAPIキーを環境変数から取得
-OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
-openAiClient = OpenAI(api_key=OPENAI_API_KEY)
+from reaction_handler import ReactionHandler
+from config import get_discord_token, REACTION_RATE
+from openai_client import OpenAIClient
+from role_mention_checker import check_role_mention
+from discord_client_setup import setup_discord_client
+from prompt_loader import get_prompt
 
 class BotManager:
-    def __init__(self, bot: Bot, reactions: Reactions):
+    def __init__(self, bot: Bot, reactions: ReactionHandler):
         self.bot = bot
-        self.token = os.getenv(f'DISCORD_{bot.mbti_type}_TOKEN')
-
-        # Intentsを設定
-        intents = discord.Intents.default()
-        intents.messages = True  # メッセージの監視を許可
-        # ref: https://discordpy.readthedocs.io/ja/latest/api.html#discord.Message.content
-        intents.message_content = True
-
-        # Discordクライアントの作成（intentsを指定）
-        self.client = discord.Client(intents=intents)
-
+        self.token = get_discord_token(bot.mbti_type)
+        self.openai_client = OpenAIClient()
+        self.client = setup_discord_client()
         self.reactions = reactions
 
     def setup_events(self):
@@ -41,70 +27,45 @@ class BotManager:
             if message.author == self.client.user:
                 return
             
-            # リアクション用の処理を走らせる（すでにリアクションが決定していたらスキップ）
-            # メッセージに対して適切なリアクションを返す
-            print(f"message.content = {message.content}")
-            if message.content.strip():
-                print("self.reactions.fetchReaction start")
-                await self.reactions.fetchReaction(message_id=message.id, message_content=message.content)
-                print("self.reactions.fetchReaction finished")
-                reactions = self.reactions.getReactions(message.id)
-                print(f"reactions = {reactions}")
-                print("self.reactions.getReactions finished")
-
-
-                # リアクションを付ける
-                for reaction in reactions:
-                    try:
-                        # 50%でリアクションを付ける
-                        if random.random() <= 0.5:
-                            await message.add_reaction(reaction)
-                    except Exception as e:
-                        print(e)
+            await self.handle_reactions(message)
+            await self.handle_mentions(message)
             
-            # ロールメンションの対応
-            roles = message.role_mentions
-            is_role_mentioned = False
+    
+    async def handle_reactions(self, message):
+        """メッセージに対して適切なリアクションを付ける"""
+        if message.content.strip():
+            await self.reactions.fetchReaction(message_id=message.id, message_content=message.content)
+            reactions = self.reactions.getReactions(message.id)
 
-            for role in roles:
-                if self.client.user in role.members:
-                    is_role_mentioned = True
+            # リアクションを付ける
+            for reaction in reactions:
+                if random.random() <= REACTION_RATE:
+                    try:
+                        await message.add_reaction(reaction)
+                    except Exception as e:
+                        print(f"Error = {e}: リアクションが送れませんでした")
 
-            # メンションされた場合に反応
-            if self.client.user.mentioned_in(message) or is_role_mentioned:
-                # 正規表現を使って、ユーザーID、ユーザー名、ロールのメンションを削除
-                user_message = re.sub(r'<@!?(\d+)>|<@!?(\w+)>|<@&(\d+)>', '', message.content).strip()
+    async def handle_mentions(self, message):
+        """メンションがあった場合にキャラが返信をする"""
+        if self.client.user.mentioned_in(message) or check_role_mention(message=message, client=self.client):
+            # 正規表現を使って、ユーザーID、ユーザー名、ロールのメンションを削除
+            user_message = re.sub(r'<@!?(\d+)>|<@!?(\w+)>|<@&(\d+)>', '', message.content).strip()
 
+            # キャラのプロンプトを読み込む
+            mbti_prompt = get_prompt(f'prompt/mbti/{self.bot.mbti_file_name}.txt')
+            if user_message:
+                response = self.openai_client.get_response(
+                    prompt = mbti_prompt,
+                    user_message = user_message,
+                )
 
-                # キャラのプロンプトを読み込む
-                with open(f'prompt/mbti/{self.bot.mbti_file_name}.txt', 'r', encoding='utf-8') as file:
-                    mbti_prompt = file.read()
-
-                if user_message:
-                    # OpenAIにメッセージを送信して返答を取得
-                    # ref: https://platform.openai.com/docs/guides/text%EF%BC%8Dgeneration
-                    completion = openAiClient.chat.completions.create(
-                        model="gpt-4o-mini",
-                        messages=[
-                            {"role": "developer", "content": mbti_prompt},
-                            {
-                                "role": "user",
-                                "content": user_message,
-                            }
-                        ]
-                    )
-
-                    print(f'completion = {completion}')
-
-                    # 生成された返答を送信
-                    await message.channel.send(completion.choices[0].message.content)
-                else:
-                    await message.channel.send("Hello! How can I assist you today?")
+                # 生成された返答を送信
+                await message.channel.send(response)
 
     async def start(self):
         await self.client.start(self.token)
 
-async def start_bot(bot: Bot, reactions: Reactions):
+async def start_bot(bot: Bot, reactions: ReactionHandler):
     bot_manager = BotManager(bot, reactions)
     bot_manager.setup_events()
     await bot_manager.start()
