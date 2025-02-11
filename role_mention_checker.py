@@ -1,5 +1,5 @@
-# ロールメンションされたかどうか
-def check_role_mention(message, client):
+def check_role_mention(message, client) -> bool:
+    """ロールメンションされたかどうか"""
     roles = message.role_mentions
     is_role_mentioned = False
 

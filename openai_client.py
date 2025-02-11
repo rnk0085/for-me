@@ -9,10 +9,11 @@ class OpenAIClient:
 
     def get_response(
             self,
-            prompt,
-            user_message,
-            model = openai_model,
-    ):
+            prompt: str,
+            user_message: str,
+            model: str = openai_model,
+    ) -> str:
+        """OpenAIからの返答を返す"""
         try:
             # ref: https://platform.openai.com/docs/guides/text-generation
             completion = self.openAiClient.chat.completions.create(

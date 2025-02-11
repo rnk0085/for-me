@@ -27,6 +27,7 @@ class Reactions:
         self.openai_client = OpenAIClient()
     
     async def fetchReaction(self, message_id, message_content):
+        """OpenAIを活用してリアクションを取得する"""
         print("fetchReaction start")
 
         # 他のが呼び出していないか。同じIDで呼び出していれば、待って欲しい。
