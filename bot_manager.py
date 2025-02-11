@@ -27,7 +27,7 @@ class BotManager:
             if message.author == self.client.user:
                 return
             
-            # await self.handle_reactions(message)
+            await self.handle_reactions(message)
             await self.handle_auto_response(message)
             await self.handle_mentions(message)
             
@@ -35,6 +35,19 @@ class BotManager:
     async def handle_reactions(self, message):
         """メッセージに対して適切なリアクションを付ける"""
         if message.content.strip():
+            if "times" in message.channel.name:
+                print("timesにはリアクションを付けない")
+                return
+            
+            if str(message.channel.id) == get_channel_id("DEV"):
+                print("開発用のチャンネルにはリアクションを付けない")
+                return
+            
+            if message.author.bot:
+                if random.random() <= REACTION_RATE:
+                    print("Botにはランダムでリアクションを付ける")
+                    return
+
             await self.reactions.fetchReaction(message_id=message.id, message_content=message.content)
             reactions = self.reactions.getReactions(message.id)
 
