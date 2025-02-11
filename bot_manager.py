@@ -1,17 +1,16 @@
 import re
 import discord
 import random
-from openai import OpenAI
 from bot import Bot
 from reactions import Reactions
-from config import OPENAI_API_KEY, get_discord_token
-
-openAiClient = OpenAI(api_key=OPENAI_API_KEY)
+from config import get_discord_token
+from openai_client import OpenAIClient
 
 class BotManager:
     def __init__(self, bot: Bot, reactions: Reactions):
         self.bot = bot
         self.token = get_discord_token(bot.mbti_type)
+        self.openai_client = OpenAIClient()
 
         # Intentsを設定
         intents = discord.Intents.default()
@@ -69,31 +68,18 @@ class BotManager:
                 # 正規表現を使って、ユーザーID、ユーザー名、ロールのメンションを削除
                 user_message = re.sub(r'<@!?(\d+)>|<@!?(\w+)>|<@&(\d+)>', '', message.content).strip()
 
-
                 # キャラのプロンプトを読み込む
                 with open(f'prompt/mbti/{self.bot.mbti_file_name}.txt', 'r', encoding='utf-8') as file:
                     mbti_prompt = file.read()
 
                 if user_message:
-                    # OpenAIにメッセージを送信して返答を取得
-                    # ref: https://platform.openai.com/docs/guides/text%EF%BC%8Dgeneration
-                    completion = openAiClient.chat.completions.create(
-                        model="gpt-4o-mini",
-                        messages=[
-                            {"role": "developer", "content": mbti_prompt},
-                            {
-                                "role": "user",
-                                "content": user_message,
-                            }
-                        ]
+                    response = self.openai_client.get_response(
+                        prompt = mbti_prompt,
+                        user_message = user_message,
                     )
 
-                    print(f'completion = {completion}')
-
                     # 生成された返答を送信
-                    await message.channel.send(completion.choices[0].message.content)
-                else:
-                    await message.channel.send("Hello! How can I assist you today?")
+                    await message.channel.send(response)
 
     async def start(self):
         await self.client.start(self.token)
