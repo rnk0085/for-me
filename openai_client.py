@@ -14,6 +14,7 @@ class OpenAIClient:
             model: str = openai_model,
     ) -> str:
         """OpenAIからの返答を返す"""
+        print(f"OpenAIClient > get_response started")
         try:
             # ref: https://platform.openai.com/docs/guides/text-generation
             completion = self.openAiClient.chat.completions.create(
