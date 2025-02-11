@@ -6,22 +6,14 @@ from reactions import Reactions
 from config import get_discord_token, REACTION_RATE
 from openai_client import OpenAIClient
 from role_mention_checker import check_role_mention
+from discord_client_setup import setup_discord_client
 
 class BotManager:
     def __init__(self, bot: Bot, reactions: Reactions):
         self.bot = bot
         self.token = get_discord_token(bot.mbti_type)
         self.openai_client = OpenAIClient()
-
-        # Intentsを設定
-        intents = discord.Intents.default()
-        intents.messages = True  # メッセージの監視を許可
-        # ref: https://discordpy.readthedocs.io/ja/latest/api.html#discord.Message.content
-        intents.message_content = True
-
-        # Discordクライアントの作成（intentsを指定）
-        self.client = discord.Client(intents=intents)
-
+        self.client = setup_discord_client()
         self.reactions = reactions
 
     def setup_events(self):
