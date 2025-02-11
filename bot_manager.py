@@ -1,23 +1,17 @@
-import os
 import re
 import discord
 import random
-from dotenv import load_dotenv
 from openai import OpenAI
 from bot import Bot
 from reactions import Reactions
+from config import OPENAI_API_KEY, get_discord_token
 
-# .envファイルから環境変数を読み込む
-load_dotenv()
-
-# OpenAIのAPIキーを環境変数から取得
-OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 openAiClient = OpenAI(api_key=OPENAI_API_KEY)
 
 class BotManager:
     def __init__(self, bot: Bot, reactions: Reactions):
         self.bot = bot
-        self.token = os.getenv(f'DISCORD_{bot.mbti_type}_TOKEN')
+        self.token = get_discord_token(bot.mbti_type)
 
         # Intentsを設定
         intents = discord.Intents.default()

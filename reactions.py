@@ -1,13 +1,7 @@
-import os
 import asyncio
-from dotenv import load_dotenv
 from openai import OpenAI
+from config import OPENAI_API_KEY
 
-# .envファイルから環境変数を読み込む
-load_dotenv()
-
-# OpenAIのAPIキーを環境変数から取得
-OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 openAiClient = OpenAI(api_key=OPENAI_API_KEY)
 
 # ジャンルと対応する絵文字のマッピング
