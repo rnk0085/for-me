@@ -1,4 +1,5 @@
 import os
+import re
 import discord
 import random
 from dotenv import load_dotenv
@@ -61,10 +62,19 @@ class BotManager:
                     except Exception as e:
                         print(e)
             
+            # ロールメンションの対応
+            roles = message.role_mentions
+            is_role_mentioned = False
+
+            for role in roles:
+                if self.client.user in role.members:
+                    is_role_mentioned = True
 
             # メンションされた場合に反応
-            if self.client.user.mentioned_in(message):
-                user_message = message.content.replace(f'<@!{self.client.user.id}>', '').strip()
+            if self.client.user.mentioned_in(message) or is_role_mentioned:
+                # 正規表現を使って、ユーザーID、ユーザー名、ロールのメンションを削除
+                user_message = re.sub(r'<@!?(\d+)>|<@!?(\w+)>|<@&(\d+)>', '', message.content).strip()
+
 
                 # キャラのプロンプトを読み込む
                 with open(f'prompt/mbti/{self.bot.mbti_file_name}.txt', 'r', encoding='utf-8') as file:
