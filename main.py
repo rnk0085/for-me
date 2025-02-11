@@ -1,6 +1,6 @@
 import asyncio
 from bot_manager import start_bot
-from bot import allBots
+from bot import all_bots
 from reactions import Reactions
 
 if __name__ == "__main__":
@@ -8,7 +8,7 @@ if __name__ == "__main__":
 
     reactions = Reactions()
 
-    for bot in allBots:
+    for bot in all_bots:
         loop.create_task(start_bot(bot=bot, reactions=reactions))
     
     loop.run_forever()
