@@ -1,5 +1,4 @@
 import re
-import discord
 import random
 from bot import Bot
 from reactions import Reactions
@@ -7,6 +6,7 @@ from config import get_discord_token, REACTION_RATE
 from openai_client import OpenAIClient
 from role_mention_checker import check_role_mention
 from discord_client_setup import setup_discord_client
+from prompt_loader import get_prompt
 
 class BotManager:
     def __init__(self, bot: Bot, reactions: Reactions):
@@ -46,9 +46,7 @@ class BotManager:
                 user_message = re.sub(r'<@!?(\d+)>|<@!?(\w+)>|<@&(\d+)>', '', message.content).strip()
 
                 # キャラのプロンプトを読み込む
-                with open(f'prompt/mbti/{self.bot.mbti_file_name}.txt', 'r', encoding='utf-8') as file:
-                    mbti_prompt = file.read()
-
+                mbti_prompt = get_prompt(f'prompt/mbti/{self.bot.mbti_file_name}.txt')
                 if user_message:
                     response = self.openai_client.get_response(
                         prompt = mbti_prompt,

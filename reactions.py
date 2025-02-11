@@ -1,5 +1,6 @@
 import asyncio
 from openai_client import OpenAIClient
+from prompt_loader import get_prompt
 
 # ジャンルと対応する絵文字のマッピング
 reaction_genre_map = {
@@ -39,10 +40,7 @@ class Reactions:
             print("OpenAIでリアクションを決める処理")
             self.fetching_message_ids.append(message_id)
 
-            with open(f'prompt/reaction.txt', 'r', encoding='utf-8') as file:
-                reaction_prompt = file.read()
-
-            prompt = f"「{message_content} 」{reaction_prompt}" 
+            prompt = f"「{message_content} 」{get_prompt(file_path = 'prompt/reaction.txt')}" 
 
             genre_response = self.openai_client.get_response(
                 prompt = prompt,
