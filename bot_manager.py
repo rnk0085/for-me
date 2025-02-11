@@ -5,6 +5,7 @@ from bot import Bot
 from reactions import Reactions
 from config import get_discord_token, REACTION_RATE
 from openai_client import OpenAIClient
+from role_mention_checker import check_role_mention
 
 class BotManager:
     def __init__(self, bot: Bot, reactions: Reactions):
@@ -46,17 +47,9 @@ class BotManager:
                             await message.add_reaction(reaction)
                         except Exception as e:
                             print(f"Error = {e}: リアクションが送れませんでした")
-            
-            # ロールメンションの対応
-            roles = message.role_mentions
-            is_role_mentioned = False
-
-            for role in roles:
-                if self.client.user in role.members:
-                    is_role_mentioned = True
 
             # メンションされた場合に反応
-            if self.client.user.mentioned_in(message) or is_role_mentioned:
+            if self.client.user.mentioned_in(message) or check_role_mention(message=message, client=self.client):
                 # 正規表現を使って、ユーザーID、ユーザー名、ロールのメンションを削除
                 user_message = re.sub(r'<@!?(\d+)>|<@!?(\w+)>|<@&(\d+)>', '', message.content).strip()
 
