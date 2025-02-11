@@ -20,7 +20,7 @@ reaction_genre_map = {
     "勉強": "📚",
 }
 
-class Reactions:
+class ReactionHandler:
     def __init__(self):
         self.message_reactions = {}
         self.fetching_message_ids = []

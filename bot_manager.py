@@ -1,7 +1,7 @@
 import re
 import random
 from bot import Bot
-from reactions import Reactions
+from reaction_handler import ReactionHandler
 from config import get_discord_token, REACTION_RATE
 from openai_client import OpenAIClient
 from role_mention_checker import check_role_mention
@@ -9,7 +9,7 @@ from discord_client_setup import setup_discord_client
 from prompt_loader import get_prompt
 
 class BotManager:
-    def __init__(self, bot: Bot, reactions: Reactions):
+    def __init__(self, bot: Bot, reactions: ReactionHandler):
         self.bot = bot
         self.token = get_discord_token(bot.mbti_type)
         self.openai_client = OpenAIClient()
@@ -59,7 +59,7 @@ class BotManager:
     async def start(self):
         await self.client.start(self.token)
 
-async def start_bot(bot: Bot, reactions: Reactions):
+async def start_bot(bot: Bot, reactions: ReactionHandler):
     bot_manager = BotManager(bot, reactions)
     bot_manager.setup_events()
     await bot_manager.start()
