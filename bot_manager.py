@@ -2,7 +2,7 @@ import re
 import random
 from bot import Bot
 from reaction_handler import ReactionHandler
-from config import get_discord_token, get_channel_id, REACTION_RATE, AUTO_REPLY_RATE
+from config import get_discord_token, get_channel_id, REACTION_RATE, AUTO_REPLY_RATE, AUTO_REPLY_IN_FREE_TALK_RATE
 from openai_client import OpenAIClient
 from role_mention_checker import check_role_mention
 from discord_client_setup import setup_discord_client
@@ -89,8 +89,15 @@ class BotManager:
             print("Botに対して褒めない")
             return
 
-        # 低確率で返信する
-        if random.random() > AUTO_REPLY_RATE:
+        # 確率で返信させる
+        if is_free_talk and random.random() > AUTO_REPLY_IN_FREE_TALK_RATE:
+            print("フリートークは高確率で返信しない")
+            return
+        if is_fb and random.random() > AUTO_REPLY_RATE:
+            print("FBは低確率で返信しない")
+            return
+        if is_praise and random.random() > AUTO_REPLY_RATE:
+            print("ほめるは低確率で返信しない")
             return
         
         pre_prompt = ""

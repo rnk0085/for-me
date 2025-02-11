@@ -19,4 +19,5 @@ def get_channel_id(channel_name: str):
 REACTION_RATE = 0.5  # 50%
 
 # 自動返信をする割合
-AUTO_REPLY_RATE = 0.1 # 10%
+AUTO_REPLY_RATE = 0.75 # 75%
+AUTO_REPLY_IN_FREE_TALK_RATE = 0.1 # 10%
