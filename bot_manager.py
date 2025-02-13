@@ -1,6 +1,7 @@
 import re
 import random
 from bot import Bot
+from discord.ext import tasks
 from reaction_handler import ReactionHandler
 from config import get_discord_token, get_channel_id, REACTION_RATE, AUTO_REPLY_RATE, AUTO_REPLY_IN_FREE_TALK_RATE
 from openai_client import OpenAIClient
@@ -20,6 +21,7 @@ class BotManager:
         @self.client.event
         async def on_ready():
             print(f'Logged in as {self.client.user}')
+            self.periodic_message.start()
 
         @self.client.event
         async def on_message(message):
@@ -63,14 +65,14 @@ class BotManager:
         """メンションが無い場合に自動で返信する"""
         # 自動返信対象かどうかをチェックする
         # 自動返信対象＝フリートーク、FB、ほめる
-        channel_id = message.channel.id
+        channel_id: int = message.channel.id
         free_talk_channel_id = get_channel_id("FREE_TALK")
         fb_channel_id = get_channel_id("FB")
         praise_channel_id = get_channel_id("PRAISE")
 
-        is_free_talk = str(channel_id) == free_talk_channel_id
-        is_fb = str(channel_id) == fb_channel_id
-        is_praise = str(channel_id) == praise_channel_id
+        is_free_talk = channel_id == free_talk_channel_id
+        is_fb = channel_id == fb_channel_id
+        is_praise = channel_id == praise_channel_id
 
         print(f"is_free_talk = {is_free_talk}")
         print(f"is_fb = {is_fb}")
@@ -133,6 +135,31 @@ class BotManager:
 
                 # 生成された返答を送信
                 await message.channel.send(response)
+
+    async def send_random_message(self):
+        """キャラがランダムな雑談メッセージを送る"""
+
+        # ref: https://discordpy.readthedocs.io/ja/stable/faq.html#how-do-i-send-a-message-to-a-specific-channel
+        times_channel = self.client.get_channel(get_channel_id(f"TIMES_{self.bot.mbti_type}"))
+        print(f"times_channel = {times_channel}")
+
+        if times_channel:
+            random_theme = random.choice(self.bot.interests)
+            print(f"random_theme = {random_theme}")
+
+            mbti_prompt = get_prompt(f'prompt/mbti/{self.bot.mbti_file_name}.txt')
+            message = self.openai_client.get_response(
+                prompt = mbti_prompt,
+                user_message = f"「{random_theme}」をテーマに自由に雑談して",
+            )
+        
+            # チャンネルに送信
+            await times_channel.send(message)
+
+    @tasks.loop(minutes=1)
+    async def periodic_message(self):
+        """定期的に雑談メッセージを送る"""
+        await self.send_random_message()
 
     async def start(self):
         await self.client.start(self.token)
