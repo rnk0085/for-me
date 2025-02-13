@@ -1,5 +1,6 @@
 import re
 import random
+import datetime
 from bot import Bot
 from discord.ext import tasks
 from reaction_handler import ReactionHandler
@@ -140,22 +141,42 @@ class BotManager:
     async def send_random_message(self):
         """キャラがランダムな雑談メッセージを送る"""
 
-        # ref: https://discordpy.readthedocs.io/ja/stable/faq.html#how-do-i-send-a-message-to-a-specific-channel
-        times_channel = self.client.get_channel(get_channel_id(f"TIMES_{self.bot.mbti_type}"))
-        print(f"times_channel = {times_channel}")
+        if self.should_post():
+            # ref: https://discordpy.readthedocs.io/ja/stable/faq.html#how-do-i-send-a-message-to-a-specific-channel
+            times_channel = self.client.get_channel(get_channel_id(f"TIMES_{self.bot.mbti_type}"))
+            print(f"times_channel = {times_channel}")
 
-        if times_channel:
-            random_theme = random.choice(self.bot.interests)
-            print(f"random_theme = {random_theme}")
+            if times_channel:
+                random_theme = random.choice(self.bot.interests)
+                print(f"random_theme = {random_theme}")
 
-            mbti_prompt = get_prompt(f'prompt/mbti/{self.bot.mbti_file_name}.txt')
-            message = self.openai_client.get_response(
-                prompt = mbti_prompt,
-                user_message = f"「{random_theme}」をテーマに自由に雑談して",
-            )
+                mbti_prompt = get_prompt(f'prompt/mbti/{self.bot.mbti_file_name}.txt')
+                message = self.openai_client.get_response(
+                    prompt = mbti_prompt,
+                    user_message = f"「{random_theme}」をテーマに自由に雑談して",
+                )
+            
+                # チャンネルに送信
+                await times_channel.send(message)
+    
+    def should_post() -> bool:
+        """時間帯ごとに異なる確率で投稿する"""
+        current_hour = datetime.datetime.now().hour
+        rate = 0
+        # 9キャラ全員のうち、1時間あたり指定された確率で少なくとも1回自動投稿される確率
+        if 7 <= current_hour < 9:
+            rate = 0.01 * 0.57 # 5%
+        elif 9 <= current_hour < 12:
+            rate = 0.01 * 2.45 # 20%
+        elif 12 <= current_hour < 17:
+            rate = 0.01 * 1.79 # 15%
+        elif 17 <= current_hour < 20:
+            rate = 0.01 * 1.17 # 10%
+        elif 20 <= current_hour <= 23:
+            rate = 0.01 * 0.57 # 5%
         
-            # チャンネルに送信
-            await times_channel.send(message)
+        return random_true_with_probability(rate)
+
 
     @tasks.loop(minutes=1)
     async def periodic_message(self):
