@@ -8,6 +8,7 @@ from openai_client import OpenAIClient
 from role_mention_checker import check_role_mention
 from discord_client_setup import setup_discord_client
 from prompt_loader import get_prompt
+from custom_random import random_true_with_probability
 
 class BotManager:
     def __init__(self, bot: Bot, reactions: ReactionHandler):
@@ -46,7 +47,7 @@ class BotManager:
                 return
             
             if message.author.bot:
-                if random.random() <= REACTION_RATE:
+                if random_true_with_probability(REACTION_RATE):
                     print("Botにはランダムでリアクションを付ける")
                     return
 
@@ -55,7 +56,7 @@ class BotManager:
 
             # リアクションを付ける
             for reaction in reactions:
-                if random.random() <= REACTION_RATE:
+                if random_true_with_probability(REACTION_RATE):
                     try:
                         await message.add_reaction(reaction)
                     except Exception as e:
@@ -92,13 +93,13 @@ class BotManager:
             return
 
         # 確率で返信させる
-        if is_free_talk and random.random() > AUTO_REPLY_IN_FREE_TALK_RATE:
+        if is_free_talk and not random_true_with_probability(AUTO_REPLY_IN_FREE_TALK_RATE):
             print("フリートークは高確率で返信しない")
             return
-        if is_fb and random.random() > AUTO_REPLY_RATE:
+        if is_fb and not random_true_with_probability(AUTO_REPLY_RATE):
             print("FBは低確率で返信しない")
             return
-        if is_praise and random.random() > AUTO_REPLY_RATE:
+        if is_praise and not random_true_with_probability(AUTO_REPLY_RATE):
             print("ほめるは低確率で返信しない")
             return
         
