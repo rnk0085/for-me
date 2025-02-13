@@ -11,9 +11,12 @@ def get_discord_token(mbti_type):
     """Discordのトークンを取得"""
     return os.getenv(f'DISCORD_{mbti_type}_TOKEN')
 
-def get_channel_id(channel_name: str):
+def get_channel_id(channel_name: str) -> int:
     """チャンネルIDを取得"""
-    return os.getenv(f'{channel_name}_CHANNEL_ID')
+    try:
+        return int(os.getenv(f'{channel_name}_CHANNEL_ID'))
+    except Exception as e:
+        print(f"Error {e}: チャンネルIDをintに変換できませんでした")
 
 # リアクションを付ける割合
 REACTION_RATE = 0.5  # 50%

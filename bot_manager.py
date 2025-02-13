@@ -1,12 +1,15 @@
 import re
 import random
+import datetime
 from bot import Bot
+from discord.ext import tasks
 from reaction_handler import ReactionHandler
 from config import get_discord_token, get_channel_id, REACTION_RATE, AUTO_REPLY_RATE, AUTO_REPLY_IN_FREE_TALK_RATE
 from openai_client import OpenAIClient
 from role_mention_checker import check_role_mention
 from discord_client_setup import setup_discord_client
 from prompt_loader import get_prompt
+from custom_random import random_true_with_probability
 
 class BotManager:
     def __init__(self, bot: Bot, reactions: ReactionHandler):
@@ -20,6 +23,7 @@ class BotManager:
         @self.client.event
         async def on_ready():
             print(f'Logged in as {self.client.user}')
+            self.periodic_message.start()
 
         @self.client.event
         async def on_message(message):
@@ -44,7 +48,7 @@ class BotManager:
                 return
             
             if message.author.bot:
-                if random.random() <= REACTION_RATE:
+                if random_true_with_probability(REACTION_RATE):
                     print("Botにはランダムでリアクションを付ける")
                     return
 
@@ -53,7 +57,7 @@ class BotManager:
 
             # リアクションを付ける
             for reaction in reactions:
-                if random.random() <= REACTION_RATE:
+                if random_true_with_probability(REACTION_RATE):
                     try:
                         await message.add_reaction(reaction)
                     except Exception as e:
@@ -63,14 +67,14 @@ class BotManager:
         """メンションが無い場合に自動で返信する"""
         # 自動返信対象かどうかをチェックする
         # 自動返信対象＝フリートーク、FB、ほめる
-        channel_id = message.channel.id
+        channel_id: int = message.channel.id
         free_talk_channel_id = get_channel_id("FREE_TALK")
         fb_channel_id = get_channel_id("FB")
         praise_channel_id = get_channel_id("PRAISE")
 
-        is_free_talk = str(channel_id) == free_talk_channel_id
-        is_fb = str(channel_id) == fb_channel_id
-        is_praise = str(channel_id) == praise_channel_id
+        is_free_talk = channel_id == free_talk_channel_id
+        is_fb = channel_id == fb_channel_id
+        is_praise = channel_id == praise_channel_id
 
         print(f"is_free_talk = {is_free_talk}")
         print(f"is_fb = {is_fb}")
@@ -90,13 +94,13 @@ class BotManager:
             return
 
         # 確率で返信させる
-        if is_free_talk and random.random() > AUTO_REPLY_IN_FREE_TALK_RATE:
+        if is_free_talk and not random_true_with_probability(AUTO_REPLY_IN_FREE_TALK_RATE):
             print("フリートークは高確率で返信しない")
             return
-        if is_fb and random.random() > AUTO_REPLY_RATE:
+        if is_fb and not random_true_with_probability(AUTO_REPLY_RATE):
             print("FBは低確率で返信しない")
             return
-        if is_praise and random.random() > AUTO_REPLY_RATE:
+        if is_praise and not random_true_with_probability(AUTO_REPLY_RATE):
             print("ほめるは低確率で返信しない")
             return
         
@@ -133,6 +137,51 @@ class BotManager:
 
                 # 生成された返答を送信
                 await message.channel.send(response)
+
+    async def send_random_message(self):
+        """キャラがランダムな雑談メッセージを送る"""
+
+        if self.should_post():
+            # ref: https://discordpy.readthedocs.io/ja/stable/faq.html#how-do-i-send-a-message-to-a-specific-channel
+            times_channel = self.client.get_channel(get_channel_id(f"TIMES_{self.bot.mbti_type}"))
+            print(f"times_channel = {times_channel}")
+
+            if times_channel:
+                random_theme = random.choice(self.bot.interests)
+                print(f"random_theme = {random_theme}")
+
+                mbti_prompt = get_prompt(f'prompt/mbti/{self.bot.mbti_file_name}.txt')
+                message = self.openai_client.get_response(
+                    prompt = mbti_prompt,
+                    user_message = f"「{random_theme}」をテーマに自由に雑談して",
+                )
+            
+                # チャンネルに送信
+                await times_channel.send(message)
+    
+    def should_post() -> bool:
+        """時間帯ごとに異なる確率で投稿する"""
+        current_hour = datetime.datetime.now().hour
+        rate = 0
+        # 9キャラ全員のうち、1時間あたり指定された確率で少なくとも1回自動投稿される確率
+        if 7 <= current_hour < 9:
+            rate = 0.01 * 0.57 # 5%
+        elif 9 <= current_hour < 12:
+            rate = 0.01 * 2.45 # 20%
+        elif 12 <= current_hour < 17:
+            rate = 0.01 * 1.79 # 15%
+        elif 17 <= current_hour < 20:
+            rate = 0.01 * 1.17 # 10%
+        elif 20 <= current_hour <= 23:
+            rate = 0.01 * 0.57 # 5%
+        
+        return random_true_with_probability(rate)
+
+
+    @tasks.loop(minutes=1)
+    async def periodic_message(self):
+        """定期的に雑談メッセージを送る"""
+        await self.send_random_message()
 
     async def start(self):
         await self.client.start(self.token)
