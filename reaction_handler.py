@@ -65,7 +65,19 @@ class ReactionHandler:
             print(f"recommend_reactions = {recommend_reactions}")
 
             self.message_reactions[message_id] = recommend_reactions
+
+            # 完了したのでメッセージIDをfetching_message_idsから削除
             self.fetching_message_ids.remove(message_id)
+
+            # リアクションデータを一定時間後に削除
+            asyncio.create_task(self.remove_old_reactions(message_id))
 
     def getReactions(self, messageId):
         return self.message_reactions[messageId]
+    
+    async def remove_old_reactions(self, message_id, timeout=60):
+        """一定時間後にリアクションデータを削除"""
+        await asyncio.sleep(timeout)
+        if message_id in self.message_reactions:
+            del self.message_reactions[message_id]
+            print(f"メッセージID {message_id} のリアクションデータを削除しました")
