@@ -1,2 +1,8 @@
-# for-me
-自分専用の AI コミュニティ
+
+## 開発ブログ
+
+- [MBTIキャラ擬人化Botを活用した自分専用のAI Botコミュニティ](https://note.com/326takenoko/n/nc4f014e5a9f3)
+
+## ドキュメント
+
+- [Discord Botの追加方法](https://burly-slash-d81.notion.site/Discord-Bot-19911ede08058053bf04e7bcc0883db9)
