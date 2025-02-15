@@ -1,3 +1,4 @@
+import math
 import random
 import datetime
 from src.models.bot import Bot
@@ -68,4 +69,4 @@ class PeriodicMessageService:
     
     def _get_rate_for_all_characters(self, percent: int) -> float:
         """9キャラ全員のうち、1時間あたり percent の確率で少なくとも1回自動投稿される"""
-        return 1 - (1 - percent / 100) ** (1 / 9)
+        return 1 - 10 ** (math.log10(1 - percent / 100) / (9 * 60))
