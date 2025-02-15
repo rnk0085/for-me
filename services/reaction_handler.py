@@ -1,6 +1,7 @@
 import asyncio
-from openai_client import OpenAIClient
-from prompt_loader import get_prompt
+from services.openai_client import OpenAIClient
+from services.config_service import ConfigService
+from services.prompt_loader import get_prompt
 
 # ジャンルと対応する絵文字のマッピング
 reaction_genre_map = {
@@ -22,10 +23,10 @@ reaction_genre_map = {
 }
 
 class ReactionHandler:
-    def __init__(self):
+    def __init__(self, config_service: ConfigService):
         self.message_reactions = {}
         self.fetching_message_ids = []
-        self.openai_client = OpenAIClient()
+        self.openai_client = OpenAIClient(config_service)
     
     async def fetchReaction(self, message_id, message_content):
         """OpenAIを活用してリアクションを取得する"""
