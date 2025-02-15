@@ -64,8 +64,8 @@ class PeriodicMessageService:
         for (start, end), rate in rates.items():
             if start <= hour < end:
                 return rate
-        return 0
+        return 0.0
     
-    def _get_rate_for_all_characters(percent: int) -> float:
+    def _get_rate_for_all_characters(self, percent: int) -> float:
         """9キャラ全員のうち、1時間あたり percent の確率で少なくとも1回自動投稿される"""
         return 1 - (1 - percent / 100) ** (1 / 9)

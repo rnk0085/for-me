@@ -28,7 +28,7 @@ class DiscordBotManager:
         @self.client.event
         async def on_ready():
             print(f'Logged in as {self.client.user}')
-            await self.schedule_periodic_messages.start()
+            self.schedule_periodic_messages.start()
 
         @self.client.event
         async def on_message(message):
@@ -42,9 +42,11 @@ class DiscordBotManager:
     @tasks.loop(minutes=1)
     async def schedule_periodic_messages(self):
         """定期的なメッセージ送信のスケジューリング"""
-        print("定期的なメッセージ送信をスケジューリングしました1")
-        await self.periodic_message_service.send_random_message(self.client)
-        print("定期的なメッセージ送信をスケジューリングしました")
+        try:
+            print("定期的なメッセージ送信をスケジューリングしました")
+            await self.periodic_message_service.send_random_message(self.client)
+        except Exception as e:
+            print(f"定期メッセージ送信中にエラーが発生しました: {e}")
 
     async def start(self):
         self.initialize_event_handlers()
