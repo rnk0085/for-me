@@ -1,10 +1,10 @@
 import random
 import datetime
-from services.bot import Bot
-from services.openai_client import OpenAIClient
-from services.config_service import ConfigService
-from services.prompt_loader import get_prompt
-from services.custom_random import random_true_with_probability
+from src.models.bot import Bot
+from src.services.openai_client import OpenAIClient
+from src.services.config_service import ConfigService
+from src.services.prompt_loader import get_prompt
+from src.utils.random_utils import random_true_with_probability
 
 class PeriodicMessageService:
     def __init__(

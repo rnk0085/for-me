@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import Mock, patch
-from bot_manager import BotManager
+from src.services.bot_manager import BotManager
 
 class TestBotManager:
     @pytest.fixture

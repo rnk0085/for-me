@@ -1,5 +1,5 @@
 from openai import OpenAI
-from services.config_service import ConfigService
+from src.services.config_service import ConfigService
 
 class OpenAIClient:
     openai_model = "gpt-4o-mini"

@@ -1,8 +1,8 @@
 import asyncio
-from bot_manager import start_bot
-from services.bot import all_bots
-from services.reaction_handler import ReactionHandler
-from services.config_service import ConfigService
+from src.services.reaction_handler import ReactionHandler
+from src.services.bot_manager import start_bot
+from src.models.bot import all_bots
+from src.services.config_service import ConfigService
 
 async def main():
     reactions = ReactionHandler(ConfigService())

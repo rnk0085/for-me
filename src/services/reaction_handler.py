@@ -1,7 +1,7 @@
 import asyncio
-from services.openai_client import OpenAIClient
-from services.config_service import ConfigService
-from services.prompt_loader import get_prompt
+from src.services.openai_client import OpenAIClient
+from src.services.config_service import ConfigService
+from src.services.prompt_loader import get_prompt
 
 # ジャンルと対応する絵文字のマッピング
 reaction_genre_map = {

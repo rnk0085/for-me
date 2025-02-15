@@ -1,11 +1,11 @@
 import discord
-from services.bot import Bot
-from services.message_handler import MessageHandler
-from services.periodic_message_service import PeriodicMessageService
-from services.reaction_handler import ReactionHandler
-from services.openai_client import OpenAIClient
-from services.config_service import ConfigService
-from services.discord_client_setup import setup_discord_client
+from src.services.message_handler import MessageHandler
+from src.services.periodic_message_service import PeriodicMessageService
+from src.services.reaction_handler import ReactionHandler
+from src.services.openai_client import OpenAIClient
+from src.services.config_service import ConfigService
+from src.services.discord_client_setup import setup_discord_client
+from src.models.bot import Bot
 from discord.ext import tasks
 
 class BotManager:
