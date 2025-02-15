@@ -1,6 +1,6 @@
 import asyncio
 from src.services.reaction_handler import ReactionHandler
-from src.services.bot_manager import start_bot
+from src.services.discord_bot_manager import start_bot
 from src.models.bot import all_bots
 from src.services.config_service import ConfigService
 

@@ -1,5 +1,5 @@
 import discord
-from src.services.message_handler import MessageHandler
+from src.services.discord_message_handler import DiscordMessageHandler
 from src.services.periodic_message_service import PeriodicMessageService
 from src.services.reaction_handler import ReactionHandler
 from src.services.openai_client import OpenAIClient
@@ -8,12 +8,13 @@ from src.services.discord_client_setup import setup_discord_client
 from src.models.bot import Bot
 from discord.ext import tasks
 
-class BotManager:
+class DiscordBotManager:
+    """Discordボットの初期化とイベント管理を行うクラス"""
     def __init__(
         self,
         bot: Bot,
         discord_client: discord.Client,
-        message_handler: MessageHandler,
+        message_handler: DiscordMessageHandler,
         periodic_message_service: PeriodicMessageService,
     ):
         self.bot = bot
@@ -22,34 +23,38 @@ class BotManager:
         self.periodic_message_service = periodic_message_service
         self.token = ConfigService().get_discord_token(bot.mbti_type)
 
-    def setup_events(self):
+    def initialize_event_handlers(self):
+        """Discordイベントハンドラーの初期化"""
         @self.client.event
         async def on_ready():
             print(f'Logged in as {self.client.user}')
-            self.periodic_message.start()
+            await self.schedule_periodic_messages.start()
 
         @self.client.event
         async def on_message(message):
             if message.author == self.client.user:
                 return
             
-            await self.message_handler.handle_reactions(message)
-            await self.message_handler.handle_auto_response(message)
-            await self.message_handler.handle_mentions(message, self.client)
+            await self.message_handler.process_reactions(message)
+            await self.message_handler.process_auto_response(message)
+            await self.message_handler.process_mentions(message, self.client)
 
     @tasks.loop(minutes=1)
-    async def periodic_message(self):
+    async def schedule_periodic_messages(self):
+        """定期的なメッセージ送信のスケジューリング"""
+        print("定期的なメッセージ送信をスケジューリングしました1")
         await self.periodic_message_service.send_random_message(self.client)
+        print("定期的なメッセージ送信をスケジューリングしました")
 
     async def start(self):
-        self.setup_events()
+        self.initialize_event_handlers()
         await self.client.start(self.token)
 
 async def start_bot(bot: Bot, reactions: ReactionHandler):
-    bot_manager = BotManager(
+    bot_manager = DiscordBotManager(
         bot=bot,
         discord_client=setup_discord_client(),
-        message_handler=MessageHandler(bot, reactions, OpenAIClient(ConfigService()), ConfigService()),
+        message_handler=DiscordMessageHandler(bot, reactions, OpenAIClient(ConfigService()), ConfigService()),
         periodic_message_service=PeriodicMessageService(bot, OpenAIClient(ConfigService()), ConfigService()),
     )
     await bot_manager.start()

@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import Mock, patch
-from src.services.bot_manager import BotManager
+from src.services.bot_manager import DiscordBotManager
 
 class TestBotManager:
     @pytest.fixture
@@ -11,7 +11,7 @@ class TestBotManager:
         discord_client = Mock()
         config_service = Mock()
         
-        return BotManager(
+        return DiscordBotManager(
             bot=bot,
             reactions=reactions,
             openai_client=openai_client,
