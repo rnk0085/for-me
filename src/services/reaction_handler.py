@@ -45,7 +45,7 @@ class ReactionHandler:
 
             prompt = f"「{message_content} 」{get_prompt(file_path = 'prompt/reaction.txt')}" 
 
-            genre_response = self.openai_client.get_response(
+            genre_response = await self.openai_client.get_response(
                 prompt = prompt,
                 user_message = message_content,
             )
