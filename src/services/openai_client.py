@@ -1,11 +1,11 @@
-from openai import OpenAI
+from openai import OpenAI, AsyncOpenAI
 from src.services.config_service import ConfigService
 
 class OpenAIClient:
     openai_model = "gpt-4o-mini"
 
     def __init__(self, config_service: ConfigService):
-        self.openAiClient = OpenAI(api_key=config_service.get_openai_api_key())
+        self.openAiClient = AsyncOpenAI(api_key=config_service.get_openai_api_key())
 
     async def get_response(
             self,
@@ -18,13 +18,10 @@ class OpenAIClient:
         try:
             # ref: https://platform.openai.com/docs/guides/text-generation
             completion = await self.openAiClient.chat.completions.create(
-                model = model,
-                messages = [
-                    {"role": "developer", "content": prompt},
-                    {
-                        "role": "user",
-                        "content": user_message,
-                    }
+                model=model,
+                messages=[
+                    {"role": "system", "content": prompt},
+                    {"role": "user", "content": user_message},
                 ]
             )
 
