@@ -75,6 +75,18 @@ class TestDiscordMessageHandler:
         message_handler._should_auto_respond.assert_called_once_with(mock_message.channel.id, mock_message.author.bot)
         message_handler._generate_ai_response.assert_called_once_with(mock_message, mock_message.content)
         mock_message.channel.send.assert_called_once_with(expected_response)
+    
+    @pytest.mark.asyncio
+    async def test_process_auto_response_in_free_talk_not_auto_respond(self, message_handler, mock_message):
+        """フリートークチャンネルでの自動応答がFalseの場合のテスト"""
+        ### Given
+        message_handler._should_auto_respond = Mock(return_value=False)
+
+        ### When
+        await message_handler.process_auto_response(mock_message)
+
+        ### Then
+        assert not mock_message.channel.send.called
 
     @pytest.mark.asyncio
     async def test_process_mentions(self, message_handler, mock_message, mock_discord_client):
