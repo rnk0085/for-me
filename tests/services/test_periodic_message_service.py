@@ -10,11 +10,12 @@ class TestPeriodicMessageService:
 
     @pytest.fixture
     def periodic_service(self, mock_bot, mock_openai_client, mock_config_service):
-        return PeriodicMessageService(
-            bot=mock_bot,
-            openai_client=mock_openai_client,
-            config_service=mock_config_service
-        )
+        with patch('src.services.periodic_message_service.get_prompt', return_value="テスト用プロンプト"):
+            return PeriodicMessageService(
+                bot=mock_bot,
+                openai_client=mock_openai_client,
+                config_service=mock_config_service
+            )
 
     @pytest.fixture
     def mock_channel(self):
@@ -23,34 +24,33 @@ class TestPeriodicMessageService:
         return channel
 
     @pytest.mark.asyncio
-    async def test_send_random_message_not_sent_when_should_send_message_false(self, periodic_service):
-        """_should_send_message() が False の場合、メッセージを送信しない"""
+    async def test_send_random_message_not_sent_when_should_send_message_false(self, periodic_service, mock_discord_client):
+        """_should_send_message() が False を返す場合、メッセージが送信されないことを確認"""
+        ### Given
         periodic_service._should_send_message = Mock(return_value=False)
-        mock_client = Mock()
-        await periodic_service.send_random_message(mock_client)
 
-        mock_client.get_channel.assert_not_called()
+        ### When
+        await periodic_service.send_random_message(mock_discord_client)
+
+        ### Then
+        mock_discord_client.get_channel.assert_not_called()
 
     @pytest.mark.asyncio
-    async def test_send_random_message_sent_to_correct_channel(self, periodic_service):
-        """_should_send_message() が True の場合、適切なチャンネルにメッセージを送信する"""
+    async def test_send_random_message_sent_to_correct_channel(self, periodic_service, mock_discord_client):
+        """正しいチャンネルにメッセージが送信されることを確認"""
+        ### Given
         periodic_service._should_send_message = Mock(return_value=True)
+        mock_channel = Mock()
+        mock_channel.send = AsyncMock()
+        mock_discord_client.get_channel = Mock(return_value=mock_channel)
+        periodic_service._generate_random_message = AsyncMock(return_value="テストメッセージ")
 
-        # チャンネルのモック
-        mock_channel = AsyncMock()
-        mock_client = Mock()
-        mock_client.get_channel = Mock(return_value=mock_channel)
+        ### When
+        await periodic_service.send_random_message(mock_discord_client)
 
-        # `_get_target_channel()` をモック化して、期待するチャンネルを返す
-        periodic_service._get_target_channel = Mock(return_value=mock_channel)
-
-        # `_generate_random_message()` をモック化して、固定メッセージを返す
-        periodic_service._generate_random_message = AsyncMock(return_value="Test Message")
-
-        await periodic_service.send_random_message(mock_client)
-
-        # 適切なチャンネルで send() が呼ばれたことを確認
-        mock_channel.send.assert_called_once_with("Test Message")
+        ### Then
+        mock_discord_client.get_channel.assert_called_once()
+        mock_channel.send.assert_called_once_with("テストメッセージ")
     
     def test_get_target_channel(self, periodic_service, mock_config_service):
         """_get_target_channel() が正しくチャンネルを取得するか"""
@@ -70,17 +70,20 @@ class TestPeriodicMessageService:
     @pytest.mark.asyncio
     async def test_generate_random_message(self, periodic_service, mock_openai_client):
         """_generate_random_message() が OpenAI から正しいレスポンスを受け取るか"""
-        periodic_service.openai_client.get_response = Mock(return_value="AI Generated Message")
+        ### Given
+        expected_response = "AI Generated Message"
+        mock_openai_client.get_response = AsyncMock(return_value=expected_response)
+        periodic_service.openai_client = mock_openai_client
 
+        ### When
         result = await periodic_service._generate_random_message("Test Topic")
 
-        # OpenAI API に正しいプロンプトでリクエストされているか
-        periodic_service.openai_client.get_response.assert_called_once_with(
+        ### Then
+        assert result == expected_response
+        mock_openai_client.get_response.assert_called_once_with(
             prompt="",
             user_message="「Test Topic」をテーマに自由に雑談して"
         )
-
-        assert result == "AI Generated Message"
 
     @patch("src.services.periodic_message_service.datetime.datetime")
     def test_should_send_message(self, mock_datetime, periodic_service):

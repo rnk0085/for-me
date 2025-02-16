@@ -41,7 +41,7 @@ class PeriodicMessageService:
     async def _generate_random_message(self, random_theme: str) -> str:
         """ランダムな雑談メッセージを生成する"""
         prompt = get_prompt(f"prompt/mbti/{self.bot.mbti_file_name}.txt")
-        return self.openai_client.get_response(
+        return await self.openai_client.get_response(
             prompt=prompt,
             user_message=f"「{random_theme}」をテーマに自由に雑談して",
         )
