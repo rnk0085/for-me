@@ -3,10 +3,6 @@ name: Python Test
 on:
   pull_request:
     branches: [ main ]
-    paths:
-      - '**.py'
-      - 'requirements.txt'
-      - '.github/workflows/pytest.yml'
 
 jobs:
   test:
