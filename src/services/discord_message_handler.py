@@ -46,7 +46,7 @@ class DiscordMessageHandler:
         if not self._should_auto_respond(message.channel.id, message.author.bot):
             return
 
-        response = await self._generate_ai_response(message, user_message=message.content)
+        response = await self._generate_ai_response(message, message.content)
         await message.channel.send(response)
 
     async def process_mentions(self, message, client):
@@ -65,7 +65,7 @@ class DiscordMessageHandler:
         # timesチャンネルでない
         # DEVチャンネルでない
         return (
-            message.content.strip() and
+            bool(message.content.strip()) and
             "times" not in message.channel.name and
             message.channel.id != self.config_service.get_channel_id("DEV")
         )
@@ -88,7 +88,7 @@ class DiscordMessageHandler:
     async def _generate_ai_response(self, message: str, user_message: str) -> str:
         """返信を生成する"""
         prompt = self._get_prompt(message.channel.id)
-        return self.openai_client.get_response(
+        return await self.openai_client.get_response(
             prompt=prompt,
             user_message=user_message,
         )

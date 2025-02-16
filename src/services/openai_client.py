@@ -7,7 +7,7 @@ class OpenAIClient:
     def __init__(self, config_service: ConfigService):
         self.openAiClient = OpenAI(api_key=config_service.get_openai_api_key())
 
-    def get_response(
+    async def get_response(
             self,
             prompt: str,
             user_message: str,
@@ -17,7 +17,7 @@ class OpenAIClient:
         print(f"OpenAIClient > get_response started")
         try:
             # ref: https://platform.openai.com/docs/guides/text-generation
-            completion = self.openAiClient.chat.completions.create(
+            completion = await self.openAiClient.chat.completions.create(
                 model = model,
                 messages = [
                     {"role": "developer", "content": prompt},
