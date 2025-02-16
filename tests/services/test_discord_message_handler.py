@@ -32,7 +32,7 @@ class TestDiscordMessageHandler:
         """通常のメッセージに対するリアクション処理のテスト"""
         # Given
         message_handler._should_add_reaction = Mock(return_value=True)
-        mock_reaction_manager.getReactions.return_value = ["👍", "❤️"]
+        mock_reaction_manager.get_reactions.return_value = ["👍", "❤️"]
         mock_message.author.bot = False
         message_handler._should_react_randomly = Mock(return_value=True)
 
@@ -40,7 +40,7 @@ class TestDiscordMessageHandler:
         await message_handler.process_reactions(mock_message)
 
         ### Then
-        mock_reaction_manager.fetchReaction.assert_called_once_with(
+        mock_reaction_manager.fetch_reaction.assert_called_once_with(
             message_id=mock_message.id,
             message_content=mock_message.content
         )
