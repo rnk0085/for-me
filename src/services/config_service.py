@@ -26,3 +26,6 @@ class ConfigService:
     
     def get_auto_reply_in_free_talk_rate(self) -> float:
         return float(os.getenv('AUTO_REPLY_IN_FREE_TALK_RATE', 0.1))
+    
+    def get_guild_id(self) -> int:
+        return int(os.getenv('GUILD_ID'))
