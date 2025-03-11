@@ -1,43 +1,42 @@
 import discord
+from discord import app_commands
 from discord.ext import commands
 from src.services.config_service import ConfigService
-from src.services.discord_client_setup import setup_tasukuma_bot
 
-class TaskumaBot:
+class TaskumaBot(commands.Bot):
     """Tasukumaの機能を管理するクラス"""
     def __init__(self):
-        self.bot = setup_tasukuma_bot()
         self.config = ConfigService()
         self.token = self.config.get_discord_token("TASUKUMA")
-
-    def initialize_event_handlers(self):
-        """イベントハンドラーの初期化"""
-        @self.bot.event
-        async def on_ready():
-            print(f'Logged in as {self.bot.user}')
-            
-            try:
-                guild = discord.Object(id=self.config.get_guild_id())
-                await self.bot.tree.sync(guild=guild)
-                print(f"✅ コマンドが同期されました！")
-            except Exception as e:
-                print(f"🚨 コマンドの同期に失敗: {e}")
         
-        @self.bot.hybrid_command(name="ping", description="Tasukumaが応答するか確認する")
-        async def ping(ctx):
-            await ctx.send("Pong!")
-        
-        @self.bot.hybrid_command(name="list_commands", description="登録済みのコマンドを確認する")
-        async def list_commands(ctx):
-            commands = [cmd.name for cmd in self.bot.tree.get_commands()]
-            await ctx.send(f"登録されているコマンド: {commands}")
+        # intentsを設定
+        intents = discord.Intents.default()
+        intents.messages = True
+        intents.message_content = True
+        intents.guilds = True
+        intents.members = True
+        intents.voice_states = True
 
-    async def start(self):
-        """Botを起動する"""
-        self.initialize_event_handlers()
-        await self.bot.start(self.token)
+        super().__init__(
+            command_prefix='!',
+            intents=intents,
+            description='タスク管理Bot'
+        )
+    
+    async def setup_hook(self):
+        """Botの初期設定"""
+        """Cog をロードしてスラッシュコマンドを同期"""
+        await self.load_extension("src.cogs.general")
+
+        guild = discord.Object(id=self.config.get_guild_id())
+        await self.tree.sync(guild=guild)
+        print("✅ コマンドを同期しました！")
+    
+    async def on_ready(self):
+        """Bot起動時の処理"""
+        print(f'Logged in as {self.user}')
 
 async def run_tasukuma():
     """Tasukumaを起動する"""
     bot = TaskumaBot()
-    await bot.start()
+    await bot.start(bot.token)

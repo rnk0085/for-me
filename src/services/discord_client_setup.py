@@ -10,15 +10,3 @@ def setup_discord_client():
 
     client = discord.Client(intents=intents)
     return client
-
-def setup_tasukuma_bot():
-    """TasukumaのDiscordクライアントを作成する"""
-    intents = discord.Intents.default()
-    intents.messages = True
-    intents.message_content = True
-    intents.guilds = True
-    intents.members = True
-    intents.voice_states = True  # ボイスチャンネルの状態を取得
-
-    bot = commands.Bot(command_prefix='!', intents=intents)
-    return bot
