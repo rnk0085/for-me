@@ -31,8 +31,8 @@ class DiscordMessageHandler:
                 print("Botにはランダムでリアクションを付ける")
                 return
             
-        await self.reactions.fetchReaction(message_id=message.id, message_content=message.content)
-        reactions = self.reactions.getReactions(message.id)
+        await self.reactions.fetch_reaction(message_id=message.id, message_content=message.content)
+        reactions = self.reactions.get_reactions(message.id)
 
         for reaction in reactions:
             if self._should_react_randomly():
