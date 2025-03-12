@@ -1,0 +1,60 @@
+name: "Auto Label PRs Based on Commit Messages"
+
+# PRイベントでの実行を設定
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+# ワークフローに必要な権限を明示的に設定
+permissions:
+  contents: read
+  pull-requests: write  # PRへのラベル付与に必要な権限
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # 全履歴を取得（PRの範囲を特定するため）
+
+      - name: Get PR commit messages
+        id: commits
+        run: |
+          # PRのベースブランチとヘッドブランチを取得
+          BASE_SHA=${{ github.event.pull_request.base.sha }}
+          HEAD_SHA=${{ github.event.pull_request.head.sha }}
+          
+          # PRに含まれるコミットメッセージのみを取得（最大10件）
+          echo "=== PR Commit Messages (max 10) ==="
+          git log --format=%s $BASE_SHA..$HEAD_SHA --no-merges -n 10 > commit_messages.txt
+          cat commit_messages.txt
+          echo "=============================="
+          
+          # GitHub Actionsの出力変数に設定
+          echo "messages=$(cat commit_messages.txt | tr '\n' ' ')" >> "$GITHUB_OUTPUT"
+
+      - name: Debug commit messages
+        run: |
+          echo "Collected PR commit messages: ${{ steps.commits.outputs.messages }}"
+
+      - name: Apply labels based on commit messages
+        uses: actions-ecosystem/action-add-labels@v1
+        with:
+          github_token: "${{ secrets.GITHUB_TOKEN }}"
+          labels: |
+            ${{ contains(steps.commits.outputs.messages, 'fix:') && 'bug' || '' }}
+            ${{ contains(steps.commits.outputs.messages, 'feat:') && 'feature' || '' }}
+            ${{ contains(steps.commits.outputs.messages, 'refactor:') && 'refactor' || '' }}
+            ${{ contains(steps.commits.outputs.messages, 'docs:') && 'docs' || '' }}
+            ${{ contains(steps.commits.outputs.messages, 'chore:') && 'chore' || '' }}
+
+      - name: Debug applied labels
+        run: |
+          echo "Checking which labels will be applied:"
+          echo "bug: ${{ contains(steps.commits.outputs.messages, 'fix:') }}"
+          echo "feature: ${{ contains(steps.commits.outputs.messages, 'feat:') }}"
+          echo "refactor: ${{ contains(steps.commits.outputs.messages, 'refactor:') }}"
+          echo "docs: ${{ contains(steps.commits.outputs.messages, 'docs:') }}"
+          echo "chore: ${{ contains(steps.commits.outputs.messages, 'chore:') }}"
