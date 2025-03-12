@@ -1,0 +1,28 @@
+name: "Auto Label PRs Based on Commit Messages"
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Get commit messages
+        id: commits
+        run: |
+          echo "::set-output name=messages::$(git log --format=%s --no-merges -n 10 | tr '\n' ' ')"
+
+      - name: Apply labels based on commit messages
+        uses: actions-ecosystem/action-add-labels@v1
+        with:
+          github_token: "${{ secrets.GITHUB_TOKEN }}"
+          labels: |
+            ${{ contains(steps.commits.outputs.messages, 'fix') && 'bug' || '' }}
+            ${{ contains(steps.commits.outputs.messages, 'feature') && 'feature' || '' }}
+            ${{ contains(steps.commits.outputs.messages, 'refactor') && 'refactor' || '' }}
+            ${{ contains(steps.commits.outputs.messages, 'docs') && 'docs' || '' }}
+            ${{ contains(steps.commits.outputs.messages, 'chore') && 'chore' || '' }}
