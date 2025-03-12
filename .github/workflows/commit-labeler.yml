@@ -17,16 +17,18 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 10  # 最新10件のコミットを取得
+          fetch-depth: 0  # 全履歴を取得（PRの範囲を特定するため）
 
-      - name: Get commit messages
+      - name: Get PR commit messages
         id: commits
         run: |
-          # コミットメッセージを取得して一時ファイルに保存
-          git log --format=%s --no-merges -n 10 > commit_messages.txt
+          # PRのベースブランチとヘッドブランチを取得
+          BASE_SHA=${{ github.event.pull_request.base.sha }}
+          HEAD_SHA=${{ github.event.pull_request.head.sha }}
           
-          # デバッグ用に出力
-          echo "=== Latest 10 Commit Messages ==="
+          # PRに含まれるコミットメッセージのみを取得（最大10件）
+          echo "=== PR Commit Messages (max 10) ==="
+          git log --format=%s $BASE_SHA..$HEAD_SHA --no-merges -n 10 > commit_messages.txt
           cat commit_messages.txt
           echo "=============================="
           
@@ -35,7 +37,7 @@ jobs:
 
       - name: Debug commit messages
         run: |
-          echo "Collected commit messages: ${{ steps.commits.outputs.messages }}"
+          echo "Collected PR commit messages: ${{ steps.commits.outputs.messages }}"
 
       - name: Apply labels based on commit messages
         uses: actions-ecosystem/action-add-labels@v1
