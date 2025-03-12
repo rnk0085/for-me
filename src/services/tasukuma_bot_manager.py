@@ -26,7 +26,6 @@ class TaskumaBot(commands.Bot):
     async def setup_hook(self):
         """Botの初期設定"""
         """Cog をロードしてスラッシュコマンドを同期"""
-        await self.load_extension("src.cogs.general")
         await self.load_extension("src.cogs.task_commands")
 
         guild = discord.Object(id=self.config.get_guild_id())
