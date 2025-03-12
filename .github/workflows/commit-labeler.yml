@@ -10,19 +10,43 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 10  # 最新10件のコミットを取得
 
       - name: Get commit messages
         id: commits
         run: |
-          echo "messages=$(git log --format=%s --no-merges -n 10 | tr '\n' ' ')" >> "$GITHUB_OUTPUT"
+          # コミットメッセージを取得して一時ファイルに保存
+          git log --format=%s --no-merges -n 10 > commit_messages.txt
+          
+          # デバッグ用に出力
+          echo "=== Latest 10 Commit Messages ==="
+          cat commit_messages.txt
+          echo "=============================="
+          
+          # GitHub Actionsの出力変数に設定
+          echo "messages=$(cat commit_messages.txt | tr '\n' ' ')" >> "$GITHUB_OUTPUT"
+
+      - name: Debug commit messages
+        run: |
+          echo "Collected commit messages: ${{ steps.commits.outputs.messages }}"
 
       - name: Apply labels based on commit messages
         uses: actions-ecosystem/action-add-labels@v1
         with:
           github_token: "${{ secrets.GITHUB_TOKEN }}"
           labels: |
-            ${{ contains(steps.commits.outputs.messages, 'fix') && 'bug' || '' }}
-            ${{ contains(steps.commits.outputs.messages, 'feature') && 'feature' || '' }}
-            ${{ contains(steps.commits.outputs.messages, 'refactor') && 'refactor' || '' }}
-            ${{ contains(steps.commits.outputs.messages, 'docs') && 'docs' || '' }}
-            ${{ contains(steps.commits.outputs.messages, 'chore') && 'chore' || '' }}
+            ${{ contains(steps.commits.outputs.messages, 'fix:') && 'bug' || '' }}
+            ${{ contains(steps.commits.outputs.messages, 'feat:') && 'feature' || '' }}
+            ${{ contains(steps.commits.outputs.messages, 'refactor:') && 'refactor' || '' }}
+            ${{ contains(steps.commits.outputs.messages, 'docs:') && 'docs' || '' }}
+            ${{ contains(steps.commits.outputs.messages, 'chore:') && 'chore' || '' }}
+
+      - name: Debug applied labels
+        run: |
+          echo "Checking which labels will be applied:"
+          echo "bug: ${{ contains(steps.commits.outputs.messages, 'fix:') }}"
+          echo "feature: ${{ contains(steps.commits.outputs.messages, 'feat:') }}"
+          echo "refactor: ${{ contains(steps.commits.outputs.messages, 'refactor:') }}"
+          echo "docs: ${{ contains(steps.commits.outputs.messages, 'docs:') }}"
+          echo "chore: ${{ contains(steps.commits.outputs.messages, 'chore:') }}"
