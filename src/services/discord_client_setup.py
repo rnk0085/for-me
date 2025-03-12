@@ -1,4 +1,5 @@
 import discord
+from discord.ext import commands
 
 def setup_discord_client():
     """Discordクライアントを作成する"""

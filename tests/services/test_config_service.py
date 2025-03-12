@@ -19,7 +19,8 @@ class TestConfigService:
             'REACTION_RATE': '0.5',
             'AUTO_REPLY_RATE': '0.2',
             'AUTO_REPLY_IN_FREE_TALK_RATE': '0.1',
-            'OPENAI_API_KEY': 'test-api-key'
+            'OPENAI_API_KEY': 'test-api-key',
+            'GUILD_ID': '1472583690',
         }
         os.environ.clear()
         os.environ.update(test_env)
@@ -63,3 +64,7 @@ class TestConfigService:
     def test_get_nonexistent_channel(self, config_service):
         """存在しないチャンネルIDの取得テスト"""
         assert config_service.get_channel_id('NONEXISTENT') == 0
+
+    def test_get_guild_id(self, config_service):
+        """サーバーIDの取得テスト"""
+        assert config_service.get_guild_id() == 1472583690
