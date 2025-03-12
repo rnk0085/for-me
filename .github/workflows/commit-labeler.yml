@@ -1,8 +1,14 @@
 name: "Auto Label PRs Based on Commit Messages"
 
+# PRイベントでの実行を設定
 on:
   pull_request:
     types: [opened, synchronize]
+
+# ワークフローに必要な権限を明示的に設定
+permissions:
+  contents: read
+  pull-requests: write  # PRへのラベル付与に必要な権限
 
 jobs:
   label:
